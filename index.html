@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Emining Technical Training Institute | Technology for Self-Advancement
+    </title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto+Slab:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="assets/style.css" />
+
+    <!-- Custom inline styles for the new layout -->
+    <style>
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr 1fr;
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+
+      /* Left Column - Image Slider */
+      .image-slider-box {
+        background: #fff;
+        border: 2px solid #ccc;
+        padding: 10px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .slider-image-container {
+        position: relative;
+        width: 100%;
+        height: 250px;
+        overflow: hidden;
+        background: #000;
+      }
+      .slider-image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 0.3s ease;
+      }
+      .slider-nav {
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        transform: translateY(-50%);
+        padding: 0 10px;
+      }
+      .slider-nav button {
+        background: rgba(255, 255, 255, 0.7);
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #333;
+      }
+      .slider-nav button:hover {
+        background: #fff;
+      }
+      .slider-dots {
+        text-align: center;
+        margin-top: 10px;
+      }
+      .slider-dots span {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background: #ccc;
+        border-radius: 50%;
+        margin: 0 3px;
+        cursor: pointer;
+      }
+      .slider-dots span.active {
+        background: var(--primary-gold);
+      }
+      .slider-caption {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 10px;
+        color: #333;
+      }
+
+      /* Middle Column - Mission/Vision */
+      .mission-vision-box {
+        border: 2px dashed var(--primary-gold);
+        padding: 20px;
+        background: #fff;
+      }
+      .mv-section {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .mv-title {
+        background: var(--primary-gold);
+        color: #fff;
+        padding: 5px 15px;
+        font-weight: bold;
+        font-size: 18px;
+        display: inline-block;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+      }
+      .mv-text {
+        font-size: 15px;
+        color: #444;
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+      .mv-motto {
+        background: #333;
+        color: #fff;
+        padding: 8px 15px;
+        display: inline-block;
+        font-weight: bold;
+        font-size: 16px;
+        font-style: italic;
+        margin-top: 10px;
+      }
+      .core-values-list {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        text-align: left;
+        max-width: 300px;
+        margin: 0 auto;
+      }
+      .core-values-list li {
+        font-size: 15px;
+        color: #444;
+        display: flex;
+        align-items: center;
+      }
+      .core-values-list li::before {
+        content: "•";
+        color: #444;
+        font-size: 20px;
+        margin-right: 8px;
+        line-height: 1;
+      }
+
+      /* Right Column - Requirements */
+      .requirements-box {
+        border: 2px solid #1e73be;
+        padding: 20px;
+        background: #fff;
+      }
+      .requirements-box h3 {
+        font-size: 16px;
+        color: #000;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+      .requirements-box ul {
+        list-style: disc;
+        padding-left: 20px;
+        margin-bottom: 20px;
+      }
+      .requirements-box ul li {
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #333;
+      }
+      .requirements-box p {
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+
+      /* Gallery Bottom */
+      .bottom-gallery {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+      }
+      .bottom-gallery img {
+        width: 150px;
+        height: 100px;
+        object-fit: cover;
+        border: 2px solid #ccc;
+        cursor: pointer;
+        transition: border-color 0.3s;
+      }
+      .bottom-gallery img:hover,
+      .bottom-gallery img.active {
+        border-color: #1e73be;
+      }
+
+      @media (max-width: 992px) {
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HEADER & NAVIGATION -->
+    <header class="main-header">
+      <div class="container header-content">
+        <div class="logo-area">
+          <a href="index.html">
+            <img
+              src="assets/logo.png"
+              alt="Emining Technical Training Institute Logo"
+            />
+          </a>
+        </div>
+
+        <div class="menu-toggle" id="mobile-menu">☰</div>
+
+        <nav class="main-nav" id="nav-menu">
+          <a href="index.html">Home</a>
+          <a href="includes/about.html">About Us</a>
+          <a href="includes/admissions.html">Admissions</a>
+          <a href="includes/courses.html">Courses</a>
+          <a href="includes/contact.html">Contact</a>
+          <a href="student-portal/login.php" class="btn-portal"
+            >Student Portal</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+      <div class="hero-bg-slides" id="heroSlides">
+        <div
+          class="slide active"
+          style="background-image: url(&quot;assets/campus.jpg&quot;)"
+        ></div>
+        <div
+          class="slide"
+          style="background-image: url(&quot;assets/campus1.jpg&quot;)"
+        ></div>
+        <div
+          class="slide"
+          style="background-image: url(&quot;assets/campus2.jpg&quot;)"
+        ></div>
+      </div>
+
+      <div class="hero-content">
+        <h1>Technology for Self-Advancement</h1>
+        <p>
+          Join Emining Technical Training Institute and gain the practical,
+          hands-on skills you need to build a successful career in today's
+          competitive world.
+        </p>
+        <div class="hero-buttons">
+          <a
+            href="includes/admissions.html"
+            class="btn btn-primary"
+            style="text-decoration: none; display: inline-block"
+            >Apply Online Now</a
+          >
+          <a
+            href="includes/courses.html"
+            class="btn btn-secondary"
+            style="text-decoration: none; display: inline-block"
+            >Explore Courses</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW MAIN CONTENT GRID-->
+    <section
+      class="welcome-section"
+      style="padding: 40px 0; background: #f8f9fa"
+    >
+      <div class="container">
+        <div class="info-grid">
+          <!-- LEFT COLUMN: IMAGE SLIDER -->
+          <div class="image-slider-box">
+            <div class="slider-image-container">
+              <img
+                id="mainSliderImage"
+                src="assets/campus.jpg"
+                alt="Campus Image"
+              />
+              <div class="slider-nav">
+                <button onclick="prevImage()">&lt;</button>
+                <button onclick="nextImage()">&gt;</button>
+              </div>
+            </div>
+            <div class="slider-dots" id="sliderDots">
+              <span class="active" onclick="setImage(0)"></span>
+              <span onclick="setImage(1)"></span>
+              <span onclick="setImage(2)"></span>
+            </div>
+            <div class="slider-caption">Photo Gallery</div>
+
+            <div class="bottom-gallery">
+              <img
+                src="assets/campus.jpg"
+                class="active"
+                onclick="setImage(0)"
+                alt="Thumb 1"
+              />
+              <img
+                src="assets/campus1.jpg"
+                onclick="setImage(1)"
+                alt="Thumb 2"
+              />
+              <img
+                src="assets/campus2.jpg"
+                onclick="setImage(2)"
+                alt="Thumb 3"
+              />
+            </div>
+            <div class="slider-caption" style="margin-top: 15px">
+              Video Gallery
+            </div>
+          </div>
+
+          <!-- MIDDLE COLUMN: MOTTO, MISSION, VISION, VALUES -->
+          <div class="mission-vision-box">
+            <div class="mv-section">
+              <div class="mv-title">Motto</div>
+              <br />
+              <div class="mv-motto">"Technology For Self Advancement"</div>
+            </div>
+
+            <div class="mv-section">
+              <div class="mv-title">Mission</div>
+              <p class="mv-text">
+                To produce skilled human capital suitable for the dynamic global
+                economy
+              </p>
+            </div>
+
+            <div class="mv-section">
+              <div class="mv-title">Vision</div>
+              <p class="mv-text">
+                To be the centre of excellence in Science, Innovation and
+                Technology.
+              </p>
+            </div>
+
+            <div class="mv-section">
+              <div class="mv-title">Core Values</div>
+              <ul class="core-values-list">
+                <li>Commitment</li>
+                <li>Confidentiality</li>
+                <li>Integrity</li>
+                <li>Creativity</li>
+                <li>Teamwork</li>
+                <li>Innovation</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: COURSE REQUIREMENTS -->
+          <div class="requirements-box">
+            <h3>COURSES OFFERED & ENTRY REQUIREMENTS</h3>
+            <ul>
+              <li>HIGHER DIPLOMA (-Degree/Diploma in relevant courses)</li>
+              <li>LEVEL 6 (-KCSE C- & Above)</li>
+              <li>LEVEL 5 (-KCSE D & Above)</li>
+              <li>LEVEL 4 (-KCSE D- & Above)</li>
+              <li>LEVEL 3 (-KCPE & Above)</li>
+            </ul>
+
+            <h3>OTHER COURSES AVAILABLE</h3>
+            <ul>
+              <li>DRIVING: Classes A-G (-National ID; examined by NTSA)</li>
+              <li>
+                NITA; e.g. plumbing, masonry, hairdressing, electrical, etc
+                (-KCPE & Above; examined by NITA)
+              </li>
+              <li>Computer Packages (National ID)</li>
+              <li>Jitume Program (National ID)</li>
+              <li>Digital Skills (National ID)</li>
+            </ul>
+
+            <h3>EVENTS CALENDAR</h3>
+            <p>Join a Leading Institution and Build Your Future Today!</p>
+            <!-- Placeholder for the poster -->
+            <div
+              style="
+                background: #1e73be;
+                color: white;
+                padding: 20px;
+                text-align: center;
+                font-weight: bold;
+                border-radius: 5px;
+              "
+            >
+              SEPTEMBER 2026 INTAKE<br />NOW OPEN!
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h4>Contact Us</h4>
+            <p>P.O BOX 208 - 20105,<br />MOGOTIO, KENYA</p>
+            <p>Phone: +254 796 098 672</p>
+            <p>Email: info@eminingtti.ac.ke</p>
+          </div>
+          <div class="footer-col">
+            <h4>Quick Links</h4>
+            <a href="includes/about.html">About Us</a>
+            <a href="includes/admissions.html">Admissions</a>
+            <a href="includes/courses.html">Courses</a>
+            <a href="#">Library</a>
+            <a href="student-portal/login.php">E-Learning Portal</a>
+          </div>
+          <div class="footer-col">
+            <h4>Student Portal</h4>
+            <p>Are you a current or prospective student?</p>
+            <p style="margin-top: 15px">
+              <a
+                href="student-portal/login.php"
+                style="
+                  background: var(--primary-gold);
+                  color: white;
+                  padding: 10px 20px;
+                  border-radius: 4px;
+                  display: inline-block;
+                  font-weight: bold;
+                "
+                >Login to Portal</a
+              >
+            </p>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>
+            &copy; 2026 Emining Technical Training Institute. All Rights
+            Reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- External JavaScript for Hero -->
+    <script src="assets/script.js"></script>
+
+    <!-- Custom JavaScript for the New Image Swiper -->
+    <script>
+      const images = [
+        "assets/campus.jpg",
+        "assets/campus1.jpg",
+        "assets/campus2.jpg",
+      ];
+      let currentIndex = 0;
+
+      function updateSlider() {
+        // Update main image
+        document.getElementById("mainSliderImage").src = images[currentIndex];
+
+        // Update dots
+        const dots = document.getElementById("sliderDots").children;
+        for (let i = 0; i < dots.length; i++) {
+          dots[i].classList.remove("active");
+        }
+        dots[currentIndex].classList.add("active");
+
+        // Update thumbnails
+        const thumbs = document.querySelectorAll(".bottom-gallery img");
+        thumbs.forEach((img, index) => {
+          img.classList.remove("active");
+          if (index === currentIndex) {
+            img.classList.add("active");
+          }
+        });
+      }
+
+      function nextImage() {
+        currentIndex = (currentIndex + 1) % images.length;
+        updateSlider();
+      }
+
+      function prevImage() {
+        currentIndex = (currentIndex - 1 + images.length) % images.length;
+        updateSlider();
+      }
+
+      function setImage(index) {
+        currentIndex = index;
+        updateSlider();
+      }
+    </script>
+  </body>
+</html>

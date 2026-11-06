@@ -1,0 +1,237 @@
+<?php
+session_start();
+require_once "connect.php";
+
+if (!isset($_SESSION["user_id"])) {
+    header("Location: login.php");
+    exit;
+}
+
+function e($value) {
+    return htmlspecialchars((string) $value, ENT_QUOTES, "UTF-8");
+}
+
+$userId = (int) $_SESSION["user_id"];
+$applied = isset($_GET["applied"]) && $_GET["applied"] === "1";
+
+$stmt = $conn->prepare("SELECT a.id AS application_id, a.phone, a.education_level, a.motivation, a.status AS application_status, a.applied_at, a.reviewed_at, c.title, c.category, c.duration FROM course_applications a INNER JOIN courses c ON c.id = a.course_id WHERE a.user_id = ? ORDER BY a.applied_at DESC");
+
+if (!$stmt) {
+    error_log("Applications query failed: " . $conn->error);
+    http_response_code(500);
+    exit("Unable to load your applications. Please try again later.");
+}
+
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+
+function statusClass($status) {
+    switch ($status) {
+        case "approved": return "status-approved";
+        case "rejected": return "status-rejected";
+        default: return "status-pending";
+    }
+}
+
+function statusLabel($status) {
+    switch ($status) {
+        case "approved": return "Approved";
+        case "rejected": return "Rejected";
+        default: return "Pending";
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Applications | Emining TTI Portal</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root { color-scheme: light; --page-bg: #f4f6fb; --card-bg: #fff; --text: #202938; --muted: #687386; --border: #e5e7eb; --accent: #d62828; --sidebar-width: 250px; }
+        body.dark { color-scheme: dark; --page-bg: #111827; --card-bg: #1f2937; --text: #f3f4f6; --muted: #c0c8d4; --border: #374151; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; background: var(--page-bg); color: var(--text); transition: background .3s ease, color .3s ease; }
+
+        .overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1005; opacity: 0; transition: opacity 0.3s ease; }
+        .overlay.active { display: block; opacity: 1; }
+
+        .sidebar { position: fixed; top: 0; bottom: 0; left: 0; width: var(--sidebar-width); padding: 24px 17px; background: #fbe894; color: #272727; overflow-y: auto; z-index: 1010; transition: transform 0.3s ease; }
+        .brand { text-align: center; padding-bottom: 22px; border-bottom: 1px solid rgba(0,0,0,.13); }
+        .brand img { display: block; width: 100%; max-width: 130px; height: auto; max-height: 90px; object-fit: contain; margin: 0 auto 15px; background-color: #ffffff; padding: 8px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.1); }
+        .brand p { margin: 0; color: #5c5540; font-size: 13px; font-weight: bold; }
+        .menu-label { margin: 25px 12px 10px; color: #766a43; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .nav-link { display: flex; align-items: center; gap: 11px; padding: 13px 14px; margin: 5px 0; border-radius: 9px; color: #272727; text-decoration: none; font-size: 14px; font-weight: 600; transition: background .2s, color .2s; }
+        .nav-link:hover, .nav-link.active { background: #fff; color: #b91c1c; }
+        .nav-link .material-icons { font-size: 20px; color: #766a43; transition: color 0.2s; }
+        .nav-link:hover .material-icons, .nav-link.active .material-icons { color: #b91c1c; }
+        .sidebar-bottom { margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,.13); }
+
+        .main { display: flex; flex-direction: column; margin-left: var(--sidebar-width); min-height: 100vh; transition: margin-left 0.3s ease; }
+        .content { flex: 1; padding: 28px; }
+        .topbar { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 27px; flex-wrap: nowrap; }
+        .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .topbar h1 { margin: 0; font-size: 22px; white-space: nowrap; }
+        .muted { color: var(--muted); font-size: 13px; line-height: 1.2; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .top-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .mobile-menu-btn { display: none; background: transparent; border: none; color: var(--text); cursor: pointer; padding: 0; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 15px; background: var(--accent); border: 0; border-radius: 8px; color: white; text-decoration: none; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+
+        /* Applications Page Specific */
+        .application-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 14px; border-radius: 8px; margin-bottom: 20px; }
+        .applications-table-wrap { overflow-x: auto; background: var(--card-bg); border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .applications-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+        .applications-table th, .applications-table td { text-align: left; padding: 16px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 14px; }
+        .applications-table th { background: #f8fafc; color: #334155; font-weight: 700; }
+        body.dark .applications-table th { background: #1e293b; color: #cbd5e1; }
+        .applications-table td { color: var(--text); line-height: 1.6; }
+        .applications-table tr:last-child td { border-bottom: none; }
+        .status-badge { display: inline-block; padding: 6px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #dcfce7; color: #166534; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .empty-applications { background: var(--card-bg); padding: 35px 20px; border-radius: 12px; text-align: center; color: var(--muted); border: 1px solid var(--border); }
+        .empty-applications h2 { color: var(--text); margin-bottom: 10px; }
+        .browse-courses { display: inline-block; margin-top: 18px; padding: 12px 18px; background: #14532d; color: #ffffff; border-radius: 7px; text-decoration: none; font-weight: bold; }
+        .browse-courses:hover { background: #2563eb; }
+
+        .footer-quick-links { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; padding: 22px 18px; background: var(--card-bg); border-top: 1px solid var(--border); }
+        .footer-quick-links strong { color: var(--text); font-size: 14px; }
+        .footer-quick-links a { color: #dc2626; text-decoration: none; font-size: 14px; font-weight: 600; }
+        .footer-quick-links a:hover { text-decoration: underline; }
+        .footer { flex-shrink: 0; padding: 22px 28px; background: #343a40 !important; border-top: 1px solid #4b5157; text-align: center; color: #fff !important; font-size: 13px; line-height: 1.8; }
+        .footer p { margin: 4px 0; color: #fff !important; }
+
+        @media (max-width: 800px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .content { padding: 15px; }
+            .mobile-menu-btn { display: block; }
+            .topbar { flex-wrap: nowrap; gap: 8px; margin-bottom: 15px; }
+            .topbar .muted { display: none; }
+            .topbar h1 { font-size: 18px; }
+            .top-actions { gap: 6px; }
+        }
+        @media (max-width: 600px) {
+            .footer-quick-links { gap: 14px; padding: 18px 10px; flex-direction: column; text-align: center; }
+            .footer-quick-links strong { width: 100%; text-align: center; margin-bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+<div class="overlay" id="mobileOverlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="brand">
+        <img src="../assets/logo.png" alt="Emining TTI Logo">
+        <p>Account Management Portal</p>
+    </div>
+    <div class="menu-label">Main Menu</div>
+    <a class="nav-link" href="dashboard.php"><span class="material-icons">dashboard</span> Dashboard</a>
+    <a class="nav-link" href="profile.php"><span class="material-icons">person</span> My Profile</a>
+    <a class="nav-link" href="courses.php"><span class="material-icons">library_books</span> Available Courses</a>
+    <a class="nav-link active" href="my_applications.php"><span class="material-icons">assignment</span> My Applications</a>
+    <?php if (isset($_SESSION["role"]) && $_SESSION["role"] === "admin"): ?>
+        <a class="nav-link" href="users.php"><span class="material-icons">group</span> Registered Users</a>
+        <a class="nav-link" href="manage_courses.php"><span class="material-icons">settings</span> Manage Courses</a>
+    <?php endif; ?>
+    <div class="sidebar-bottom">
+        <a class="nav-link" href="../index.html"><span class="material-icons">language</span> Main Website</a>
+        <a class="nav-link" href="logout.php"><span class="material-icons">logout</span> Logout</a>
+    </div>
+</aside>
+
+<div class="main">
+<main class="content">
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <span class="material-icons">menu</span>
+            </button>
+            <div>
+                <h1>My Applications</h1>
+                <div class="muted">Track your applications</div>
+            </div>
+        </div>
+        <div class="top-actions">
+            <a class="btn" href="dashboard.php">Dashboard</a>
+        </div>
+    </header>
+
+    <?php if ($applied): ?>
+        <div class="application-success" role="status">Your application was submitted successfully. You can track its status below.</div>
+    <?php endif; ?>
+
+    <?php if ($result->num_rows > 0): ?>
+        <div class="applications-table-wrap">
+            <table class="applications-table">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Duration</th>
+                        <th>Date Applied</th>
+                        <th>Application Status</th>
+                        <th>Review Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php while ($application = $result->fetch_assoc()): ?>
+                    <tr>
+                        <td><strong><?= e($application["title"]) ?></strong><br><?= e($application["category"]) ?></td>
+                        <td><?= e($application["duration"]) ?></td>
+                        <td><?= e(date("d M Y, H:i", strtotime($application["applied_at"]))) ?></td>
+                        <td><span class="status-badge <?= e(statusClass($application["application_status"])) ?>"><?= e(statusLabel($application["application_status"])) ?></span></td>
+                        <td><?php if (!empty($application["reviewed_at"])): ?><?= e(date("d M Y, H:i", strtotime($application["reviewed_at"]))) ?><?php else: ?>Not reviewed yet<?php endif; ?></td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php else: ?>
+        <section class="empty-applications">
+            <h2>No applications yet</h2>
+            <p>You have not applied for any courses.</p>
+            <a class="browse-courses" href="courses.php">Explore Available Courses</a>
+        </section>
+    <?php endif; ?>
+</main>
+
+<nav class="footer-quick-links" aria-label="Quick Links">
+    <strong>Quick Links:</strong>
+    <a href="dashboard.php">Dashboard</a>
+    <a href="profile.php">My Profile</a>
+    <a href="courses.php">Available Courses</a>
+    <a href="my_applications.php">My Applications</a>
+    <?php if (isset($_SESSION["role"]) && $_SESSION["role"] === "admin"): ?>
+        <a href="users.php">Registered Users</a>
+        <a href="manage_courses.php">Manage Courses</a>
+    <?php endif; ?>
+</nav>
+
+<footer class="footer">
+    <p>&copy; 2026 Emining TTI. All rights reserved.</p>
+    <p>Secure account access and personal profile management.</p>
+</footer>
+</div>
+
+<script>
+(function () {
+    const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("mobileOverlay");
+
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener("click", toggleMenu);
+    if (overlay) overlay.addEventListener("click", toggleMenu);
+
+    function toggleMenu() {
+        sidebar.classList.toggle("active");
+        overlay.classList.toggle("active");
+    }
+})();
+</script>
+</body>
+</html>
+<?php $stmt->close(); ?>
